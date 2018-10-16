@@ -1,0 +1,138 @@
+class Decry:
+    def __init__(self, cipher1, cipher2):
+        """输入两端密文c1  c2"""
+        self.cipher1 = cipher1
+        self.cipher2 = cipher2
+
+    # 声明静态方法，Decry类可以不用实例化就可以调用该方法
+    @staticmethod
+    def into_ASCII(cipher_text):
+        """将16进制的字符串转化为对应的ASCII码"""
+        length = len(cipher_text)
+        idx = 0
+        ASCII_String = ""
+        hex_value = 0
+        while idx < length:
+            if not hex_value:
+                result = ""
+                result += cipher_text[idx]
+                hex_value += 1
+            else:
+                result += cipher_text[idx]
+                ASCII_String += Decry.bits_hex(result)
+                hex_value = 0
+            idx += 1
+        return ASCII_String
+
+    @staticmethod
+    def bits_hex(cipher_texts):
+        """将stringbit转为十六进制  'ab'==>0xab """
+        position1 = cipher_texts[0]
+        position2 = cipher_texts[1]
+        hex1 = Decry.bit_hex(position1) * 0x10
+        hex2 = Decry.bit_hex(position2)
+        return chr(hex1+hex2)
+
+    @staticmethod
+    def bit_hex(c):
+        if c == 'a':
+            return 0xa
+        if c == 'b':
+            return 0xb
+        if c == 'c':
+            return 0xc
+        if c == 'd':
+            return 0xd
+        if c == 'e':
+            return 0xe
+        if c == 'f':
+            return 0xf
+        else:
+            return int(c)
+
+    @staticmethod
+    def get_hex_code(cipher_text):
+        length = len(cipher_text)
+        ASCII = ""
+        idx = 0
+        while idx < length:
+            ASCII += Decry.get_hex_by_bit(cipher_text[idx])
+            idx += 1
+        return ASCII
+
+    @staticmethod
+    def get_hex_by_bit(OneChar):
+        """已知OneChar为字符，得到他的ASCII码的十六进制"""
+        return hex(ord(OneChar))[2:]
+
+    @staticmethod
+    def Two_string_OXR(cipher_1, cipher_2):
+        """两个字符串形式的十六进行异或 得到较短的"""
+        length1 = len(cipher_1)
+        length2 = len(cipher_2)
+        if length1 > length2:
+            length = length2
+        else:
+            length = length1
+        res = ""
+        idx = 0
+        while idx < length:
+            res += Decry.XOR_Two_Bit(cipher_1[idx], cipher_2[idx])
+            idx += 1
+        return res
+
+    @staticmethod
+    def XOR_Two_Bit(m1, m2):
+        """异或两十六进制位 eg 'a' XOR '2'  """
+        return hex(Decry.bit_hex(m1) ^ Decry.bit_hex(m2))[2:]
+
+
+cipher_text1 = "32510ba9babebbbefd001547a810e67149caee11d945cd7fc81a05e9f85aac650e9052ba6a8cd8257bf14d13e6f0a803b54fde9e77472dbff89d71b57bddef121336cb85ccb8f3315f4b52e301d16e9f52f904"
+cipher_text2 = "466d06ece998b7a2fb1d464fed2ced7641ddaa3cc31c9941cf110abbf409ed39598005b3399ccfafb61d0315fca0a314be138a9f32503bedac8067f03adbf3575c3b8edc9ba7f537530541ab0f9f3cd04ff50d66f1d559ba520e89a2cb2a83"
+cipher_text3 = "271946f9bbb2aeadec111841a81abc300ecaa01bd8069d5cc91005e9fe4aad6e04d513e96d99de2569bc5e50eeeca709b50a8a987f4264edb6896fb537d0a716132ddc938fb0f836480e06ed0fcd6e9759f40462f9cf57f4564186a2c1778f1543efa270bda5e933421cbe88a4a52222190f471e9bd15f652b653b7071aec59a2705081ffe72651d08f822c9ed6d76e48b63ab15d0208573a7eef027"
+cipher_text4 = "315c4eeaa8b5f8bffd11155ea506b56041c6a00c8a08854dd21a4bbde54ce56801d943ba708b8a3574f40c00fff9e00fa1439fd0654327a3bfc860b92f89ee04132ecb9298f5fd2d5e4b45e40ecc3b9d59e9417df7c95bba410e9aa2ca24c5474da2f276baa3ac325918b2daada43d6712150441c2e04f6565517f317da9d3"
+cipher_text5 = "32510bfbacfbb9befd54415da243e1695ecabd58c519cd4bd90f1fa6ea5ba47b01c909ba7696cf606ef40c04afe1ac0aa8148dd066592ded9f8774b529c7ea125d298e8883f5e9305f4b44f915cb2bd05af51373fd9b4af511039fa2d96f83414aaaf261bda2e97b170fb5cce2a53e675c154c0d9681596934777e2275b381ce2e40582afe67650b13e72287ff2270abcf73bb028932836fbdecfecee0a3b894473c1bbeb6b4913a536ce4f9b13f1efff71ea313c8661dd9a4ce"
+cipher_text6 = "32510bfbacfbb9befd54415da243e1695ecabd58c519cd4bd2061bbde24eb76a19d84aba34d8de287be84d07e7e9a30ee714979c7e1123a8bd9822a33ecaf512472e8e8f8db3f9635c1949e640c621854eba0d79eccf52ff111284b4cc61d11902aebc66f2b2e436434eacc0aba938220b084800c2ca4e693522643573b2c4ce35050b0cf774201f0fe52ac9f26d71b6cf61a711cc229f77ace7aa88a2f19983122b11be87a59c355d25f8e4"
+cipher_text7 = "3f561ba9adb4b6ebec54424ba317b564418fac0dd35f8c08d31a1fe9e24fe56808c213f17c81d9607cee021dafe1e001b21ade877a5e68bea88d61b93ac5ee0d562e8e9582f5ef375f0a4ae20ed86e935de81230b59b73fb4302cd95d770c65b40aaa065f2a5e33a5a0bb5dcaba43722130f042f8ec85b7c2070"
+cipher_text8 = "32510ba9aab2a8a4fd06414fb517b5605cc0aa0dc91a8908c2064ba8ad5ea06a029056f47a8ad3306ef5021eafe1ac01a81197847a5c68a1b78769a37bc8f4575432c198ccb4ef63590256e305cd3a9544ee4160ead45aef520489e7da7d835402bca670bda8eb775200b8dabbba246b130f040d8ec6447e2c767f3d30ed81ea2e4c1404e1315a1010e7229be6636aaa"
+cipher_text9 = "32510ba9a7b2bba9b8005d43a304b5714cc0bb0c8a34884dd91304b8ad40b62b07df44ba6e9d8a2368e51d04e0e7b207b70b9b8261112bacb6c866a232dfe257527dc29398f5f3251a0d47e503c66e935de81230b59b7afb5f41afa8d661cb"
+cipher_text10 = "234c02ecbbfbafa3ed18510abd11fa724fcda2018a1a8342cf064bbde548b12b07df44ba7191d9606ef4081ffde5ad46a5069d9f7f543bedb9c861bf29c7e205132eda9382b0bc2c5c4b45f919cf3a9f1cb74151f6d551f4480c82b2cb24cc5b028aa76eb7b4ab24171ab3cdadb8356f"
+cipher_text11 = "315c4eeaa8b5f8aaf9174145bf43e1784b8fa00dc71d885a804e5ee9fa40b16349c146fb778cdf2d3aff021dfff5b403b510d0d0455468aeb98622b137dae857553ccd8883a7bc37520e06e515d22c954eba5025b8cc57ee59418ce7dc6bc41556bdb36bbca3e8774301fbcaa3b83b220809560987815f65286764703de0f3d524400a19b159610b11ef3e"
+decry = Decry(cipher_text1, cipher_text2)
+
+res_1_2 = decry.Two_string_OXR(cipher_text1, cipher_text2)
+res_1_3 = decry.Two_string_OXR(cipher_text1, cipher_text3)
+res_1_4 = decry.Two_string_OXR(cipher_text1, cipher_text4)
+res_1_5 = decry.Two_string_OXR(cipher_text1, cipher_text5)
+res_1_6 = decry.Two_string_OXR(cipher_text1, cipher_text6)
+res_1_7 = decry.Two_string_OXR(cipher_text1, cipher_text7)
+res_1_8 = decry.Two_string_OXR(cipher_text1, cipher_text8)
+res_1_9 = decry.Two_string_OXR(cipher_text1, cipher_text9)
+res_1_10 = decry.Two_string_OXR(cipher_text1, cipher_text10)
+res_1_11 = decry.Two_string_OXR(cipher_text1, cipher_text11)
+
+m11 = "The secret message is: When using a stream cipher, never use the key more than once"
+
+slides_1_2 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_2[:])
+slides_1_3 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_3[:])
+slides_1_4 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_4[:])
+slides_1_5 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_5[:])
+slides_1_6 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_6[:])
+slides_1_7 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_7[:])
+slides_1_8 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_8[:])
+slides_1_9 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_9[:])
+slides_1_10 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_10[:])
+slides_1_11 = decry.Two_string_OXR(decry.get_hex_code("The secret message is: When using a stream cipher, never use the key more than once"), res_1_11[:])
+
+print(decry.into_ASCII(slides_1_2))
+print(decry.into_ASCII(slides_1_3))
+print(decry.into_ASCII(slides_1_4))
+print(decry.into_ASCII(slides_1_5))
+print(decry.into_ASCII(slides_1_6))
+print(decry.into_ASCII(slides_1_7))
+print(decry.into_ASCII(slides_1_8))
+print(decry.into_ASCII(slides_1_9))
+print(decry.into_ASCII(slides_1_10))
+print(decry.into_ASCII(slides_1_11))
+
+print(len(m11))
