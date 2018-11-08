@@ -1,0 +1,135 @@
+from Crypto.Cipher import AES
+
+
+class Decode:
+    def __init__(self, key, ciphertext, IV_size = 16):
+        self.key = key
+        self.byte_key = bytes.fromhex(key)
+        self.AES_mode = AES.MODE_ECB
+        self.cipher_test = ciphertext
+        self.AES = AES.new(self.byte_key, self.AES_mode)
+        self.key_len = len(key)
+        self.IV_size = IV_size
+        self.IV_size_hex = self.IV_size * 2
+        self.IV_text = self.cipher_test[:self.IV_size_hex]
+        self.real_text = self.cipher_test[self.IV_size_hex:]
+        if float(len(self.real_text)) / len(self.key) > int(len(self.real_text) / len(self.key)):
+            self.block_times = int(len(self.real_text) / len(self.key)) + 1
+        else:
+            self.block_times = int(len(self.real_text) / len(self.key))
+
+        self.blocks = []
+        self.aes = AES.new(str.encode(self.key), AES.MODE_ECB)
+        for i in range(0, self.block_times):
+            temp_block = self.real_text[i * self.key_len: (i+1) * self.key_len]
+            self.blocks.append(temp_block)
+
+    def ASE_CTR(self, message):
+        decrypte_message = self.AES.encrypt(bytes.fromhex(message)).hex()
+        return decrypte_message
+
+    def CTR(self):
+        message = ""
+        index = 0
+        Xor_text = self.IV_text
+        while index < self.block_times:
+            message += self.XOR_Two_String(self.ASE_CTR(Xor_text), self.blocks[index])
+            Xor_text = self.CTR_Mode(Xor_text)
+            index += 1
+        return self.transfer(message)
+
+    @staticmethod
+    def CTR_Mode(string):
+        length = len(string)
+        index = length - 1
+        while index >= 0:
+            if string[index] != 'f':
+                tmp_list = list(string)
+                tmp_list[index] = hex(Decode.bit_hex(string[index]) + 0x1)[2:]
+                string = ''.join(tmp_list)
+                return string
+            else:
+                tmp_list = list(string)
+                tmp_list[index] = hex(Decode.bit_hex(string[index]) + 0x1)[2:]
+                string = ''.join(tmp_list)
+                index -= 1
+        return string
+
+
+    @staticmethod
+    def bit_hex(Bit):
+        """ 'a'==> 0xA  """
+        if Bit == 'a':
+            return 0xa
+        elif Bit == 'b':
+            return 0xb
+        elif Bit == 'c':
+            return 0xc
+        elif Bit == 'd':
+            return 0xd
+        elif Bit == 'e':
+            return 0xe
+        elif Bit == 'f':
+            return 0xf
+        else:
+            return int(Bit)
+
+
+    @staticmethod
+    def XOR_Two_Bit(BitOne, BitTwo):
+        """异或两十六进制位   """
+        return hex(Decode.bit_hex(BitOne) ^ Decode.bit_hex(BitTwo))[2:]
+
+    @staticmethod
+    def XOR_Two_String(StringOne, StringTwo):
+        """异或两段字符串,返回十六进制的字符串结果"""
+        length1 = len(StringOne)
+        length2 = len(StringTwo)
+        if length1 > length2:
+            length = length2
+        else:
+            length = length1
+        res = ""
+        index = 0
+        while index < length:
+            res += Decode.XOR_Two_Bit(StringOne[index], StringTwo[index])
+            index += 1
+        return res
+
+    @staticmethod
+    def bits_hex(stringBit):
+        """将stringbit转为十六进制  'ab'==>0xab """
+        FirstBit = stringBit[0]
+        SecondBit = stringBit[1]
+        firstHex = Decode.bit_hex(FirstBit) * 0x10
+        SecondBit = Decode.bit_hex(SecondBit)
+        return chr(firstHex+SecondBit)
+
+    @staticmethod
+    def transfer(StringText):
+        """传入一个十六进制形式的ASCII码, 返回一段可读的文字"""
+        length = len(StringText)
+        index = 0
+        AsciiString = ""
+        tmp = ""
+        HexFlag = 0
+        while index < length:
+            if not HexFlag:
+                tmp = ""
+                tmp += StringText[index]
+                HexFlag += 1
+            else:
+                tmp += StringText[index]
+                AsciiString += Decode.bits_hex(tmp)
+                HexFlag = 0
+            index += 1
+        return AsciiString
+
+
+key = "36f18357be4dbd77f050515c73fcf9f2"
+ciphertext_1 = "69dda8455c7dd4254bf353b773304eec0ec7702330098ce7f7520d1cbbb20fc388d1b0adb5054dbd7370849dbf0b88d393f252e764f1f5f7ad97ef79d59ce29f5f51eeca32eabedd9afa9329"
+ciphertext_2 = "770b80259ec33beb2561358a9f2dc617e46218c0a53cbeca695ae45faa8952aa0e311bde9d4e01726d3184c34451"
+
+
+print(Decode(key, ciphertext_1).CTR())
+print(Decode(key, ciphertext_2).CTR())
