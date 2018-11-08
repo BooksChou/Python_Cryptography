@@ -1,0 +1,50 @@
+from Crypto.Cipher import AES
+from Crypto import Random
+
+# 加密IV为16个字节
+IV_size = 16
+
+
+def str_xor(a, b):
+    """ 对两个字符串进行异或操作 """
+    if len(a) > len(b):
+        return "".join([chr(ord(x) ^ ord(y)) for (x, y) in zip(a[:len(b)], b)])
+    else:
+        return "".join([chr(ord(x) ^ ord(y)) for (x, y) in zip(a, b[:len(a)])])
+
+
+def encode(key, plaintext):
+    """ 将AES用CBC模式进行加密 """
+    res = IV_size - len(plaintext) % IV_size
+    for index in range(res):
+        p = p + chr(res)
+    cipher = AES.new(key, AES.MODE_ECB)
+    iv = Random.new().read(IV_size)
+    result = iv
+
+    for i in range(len(plaintext) / IV_size):
+        ciphertext = cipher.encode(str_xor(plaintext[i * IV_size:(i + 1) * IV_size], iv))
+        iv = ciphertext
+        result += ciphertext
+    return result
+
+
+def decode(key, ciphertext):
+    """ 将AES用CBC模式进行解密 """
+    cipher = AES.new(key, AES.MODE_ECB)
+    iv = ciphertext[:IV_size]
+    result = ''
+    for i in range(1, len(ciphertext) / IV_size):
+        plaintext = str_xor(cipher.decode(ciphertext[i * IV_size:(i + 1) * IV_size]), iv)
+        iv = ciphertext[i * IV_size:(i + 1) * IV_size]
+        result += plaintext
+    res = len(result)
+    return result[:res - ord(result[res - 1])]
+
+
+key = '140b41b22a29beb4061bda66b6747e14'.decode('hex')
+ciphertext1 = '4ca00ff4c898d61e1edbf1800618fb2828a226d160dad07883d04e008a7897ee2e4b7465d5290d0c0e6c6822236e1daafb94ffe0c5da05d9476be028ad7c1d81'.decode('hex')
+ciphertext2 = '5b68629feb8606f9a6667670b75b38a5b4832d0f26e1ab7da33249de7d4afc48e713ac646ace36e872ad5fb8a512428a6e21364b0c374df45503473c5242a253'.decode('hex')
+
+print(decode(key, ciphertext1))
+print(decode(key, ciphertext2))
