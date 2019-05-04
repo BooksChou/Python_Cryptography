@@ -1,0 +1,136 @@
+
+# -*- coding:utf-8 -*-
+import os
+import requests
+import socket
+import socks
+import time
+import threading
+from urllib.parse import urlparse
+
+'''
+***使用说明***
+1.环境支持：python3支持较好，所需要包可以直接通过python3的pip下载
+2.修改内容:(1)代理客户端host(proxy_host)、代理客户端port(proxy_port)
+          (2)tshark的参数filter_f、过滤条件即可
+'''
+bad_links = [
+    'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5',
+    'https://manage.rackspacecloud.com',
+    'https://central.github.com/deployments/desktop/desktop/latest/darwin',
+    'https://goo.gl/forms/6lE9tOTcmSXCocD02',
+]
+HEADER = {
+    'User_Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'}
+link_list_file = "link_list.txt"
+
+proxy_host = "127.0.0.1"  # 代理客户端host
+proxy_port = 1080  # 代理客户端port
+
+'''
+tshark过滤参数设置
+
+filter_f         过滤条件
+interface_i      监听的网卡,如果为监听本地则为lo回环口
+duration_a       tshark监听时间设置
+
+Eg. tshark -i wlan -f "tcp dst port 443 or tcp src port 443 or http or dns" -a duration:5
+
+'''
+filter_f = "tcp dst port 443 or tcp src port 443 or http"  # "tcp dst port 3442 or tcp src port 3442"
+interface_i = "wlan"
+duration_a = "30"
+
+
+def setSocks5Proxy(proxy_host, proxy_port):
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, proxy_host, proxy_port)  # 设置requests包下层为socks5
+    socket.socket = socks.socksocket
+
+
+def tSharkCommondStr(filter_f, interface_i, duration_a, outPutFileName):
+    return "tshark -i %s -f \"%s\" -a duration:%s -w %s.pacpng" % (interface_i, filter_f, duration_a, outPutFileName)
+
+
+class operator(object):
+    def __init__(self, link_list_file, tshark_filter_f, tshark_interface_i, tshark_duration_a):
+        self.link_list_file = link_list_file
+        self.link_list = self.getLinkList()
+        self.tshark_filter_f = tshark_filter_f
+        self.tshark_interface_i = tshark_interface_i
+        self.tshark_duration_a = tshark_duration_a
+        self.pcapng_dir = time.asctime(time.localtime(time.time())).replace(" ", "_").replace(":", "_")
+        os.mkdir(self.pcapng_dir)
+        self.metux = threading.Lock()  # 控制每个请求之间不相互干扰
+
+    def getLinkList(self, file=None):
+        "Get all the link from the file, Trasfer into List"
+        if file is None:
+            file = self.link_list_file
+        with open(file, "r") as f:
+            text = f.read()
+            returnList = text.split("\n")
+        return returnList
+
+    def preOperation(self, link):
+        aimHost = urlparse(link)[1]
+        pcapngDir = self.pcapng_dir + "/" + aimHost
+        cmd = tSharkCommondStr(self.tshark_filter_f, self.tshark_interface_i, self.tshark_duration_a, pcapngDir)
+        t = threading.Thread(target=self.commandTool, args=(cmd,))
+        t.start()
+        return
+
+    def latOperation(self):
+        "Where You Need to do the Change Based on the Data that you want to grab"
+        # Use the command Tool If you need
+        return
+
+    def commandTool(self, command):
+        "Set for helping you use the os command, such as ls, dir, cd"
+        assert type(command) is str, "command should be a string, don't for get the '' outside your command"
+        os.system(command)
+        self.metux.release()
+
+    def ping(self, link):
+        proxies = {'http': 'http://localhost:1080', 'https': 'http://localhost:1080'}
+        r = requests.get(bytes(link, encoding="utf8"), proxies=proxies, timeout=int(self.tshark_duration_a) + 20,
+                         verify=False)
+        return r.text
+
+    def operation(self, link):
+        time.sleep(1)
+        self.metux.acquire()
+        print("\n[*]:" + link)
+        self.preOperation(link)
+        time.sleep(1)
+        page = self.ping(link)
+        # print(page)
+        return
+
+    def run(self):
+        if self.link_list == None:
+            self.link_list = self.getLinkList()
+        print(self.link_list)
+        count = 0
+        for link in self.link_list:
+            count += 1
+            print(count)
+            if link in bad_links or link.endswith('.pdf'):
+                print("bad or pdf")
+                continue
+            try:
+                self.operation(link)
+            except requests.Timeout:
+                print("Time out")
+                continue
+            except:
+                continue
+
+
+def main():
+    # setSocks5Proxy(proxy_host, proxy_port)
+    o = operator(link_list_file, filter_f, interface_i, duration_a)
+    o.run()
+
+
+if __name__ == '__main__':
+    main()
